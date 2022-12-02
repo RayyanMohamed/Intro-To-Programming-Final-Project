@@ -1,3 +1,5 @@
+# THIS CODE SHOULD BE RUN ON A COLAB NOTEBOOK
+
 # Install and import packages
 ! pip install datasets
 import pandas as pd
