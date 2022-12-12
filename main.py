@@ -140,3 +140,115 @@ data_table
 # Create new variable with length of claim text for each claim and plot
 claim_lens=[len(text) for text in df.claims.values]
 plt.hist(claim_lens)
+
+# Model: claim / claim label
+
+# Print length of dataset
+len(dataset["test"])
+
+# Split dataset intp train and test
+from datasets import Dataset, DatasetDict
+dataset = Dataset.from_pandas(df).train_test_split(test_size = 0.2)
+train_dataset = dataset["train"]
+test_dataset = dataset["test"]
+
+# Print length of train dataset
+len(train_dataset)
+
+# Print first element in train dataset 
+train_dataset[0]
+
+# Print length of test dataset
+len(test_dataset)
+
+# Print first element in test dataset
+test_dataset[0]
+
+# Load tokenizer
+! pip install transformers
+from transformers import AutoTokenizer
+tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+
+# Define preprocess function to run tokenizer on claims
+def preprocess_function(examples):
+    return tokenizer(examples["claims"], truncation=True)
+
+# Tokenize train and test datasets
+tokenized_train_dataset = train_dataset.map(preprocess_function, batched=True)
+tokenized_test_dataset = test_dataset.map(preprocess_function, batched=True)
+
+# Use data collator for creating training batches
+from transformers import DataCollatorWithPadding
+data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+
+# Load DistilBERT model
+from transformers import AutoModelForSequenceClassification, TrainingArguments, Trainer
+model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased", num_labels=4)
+
+# Import module to measure classification performance
+from sklearn.metrics import f1_score, accuracy_score, precision_score, recall_score
+
+def compute_metrics(pred):
+    """
+    this function is used within the model to calculate the accuracy, f1, precision, recall
+
+    Args:
+        param1 (int): either 1 or 0
+    Returns:
+        float: decimal values for accuracy, f1, precision, recall.
+
+    """
+    labels = pred.label_ids
+    preds = pred.predictions.argmax(-1)
+    # f1: average of precision and recall
+    f1 = f1_score(labels, preds, average="weighted")
+    # accuracy: number of correctly predicted data points out of all data points
+    acc = accuracy_score(labels, preds)
+    # precision: number of true positives / number of false positives
+    precision = precision_score(labels, preds, average="weighted")
+    # recall: ratio of correctly classified positive samples to all positive samples
+    recall = recall_score(labels, preds, average="weighted")
+    return {"accuracy": acc, "f1": f1, "precision": precision, "recall": recall}
+  
+  # Train model
+
+training_args = TrainingArguments(
+    output_dir="./model",
+    push_to_hub = True,
+    learning_rate=2e-5,
+    per_device_train_batch_size=16,
+    per_device_eval_batch_size=16,
+    num_train_epochs=5,
+    weight_decay=0.01,
+)
+
+trainer = Trainer(
+    model=model,
+    args=training_args,
+    train_dataset=tokenized_train_dataset, 
+    compute_metrics = compute_metrics,
+    eval_dataset=tokenized_test_dataset,
+    tokenizer=tokenizer,
+    data_collator=data_collator,
+)
+
+trainer.train()
+
+# Run prediction on model using tokenized test dataset
+predictions = trainer.predict(tokenized_test_dataset)
+
+# Print model prediction metrics
+trainer.evaluate()
+
+# Get accuracy of model
+# eval_loss: testing loss
+# eval_accuracy: accuracy of testing
+# eval_f1: combination of precision and recall
+# eval_precision: 
+# eval_recall: 
+
+import numpy as np
+from datasets import load_metric
+metric = load_metric('accuracy')
+preds = np.argmax(predictions.predictions, axis=1)
+metric.compute(predictions=preds, references=predictions.label_ids)
