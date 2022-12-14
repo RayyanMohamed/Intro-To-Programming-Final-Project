@@ -191,12 +191,10 @@ from sklearn.metrics import f1_score, accuracy_score, precision_score, recall_sc
 def compute_metrics(pred):
     """
     this function is used within the model to calculate the accuracy, f1, precision, recall
-
     Args:
         param1 (int): either 1 or 0
     Returns:
         float: decimal values for accuracy, f1, precision, recall.
-
     """
     labels = pred.label_ids
     preds = pred.predictions.argmax(-1)
@@ -210,7 +208,11 @@ def compute_metrics(pred):
     recall = recall_score(labels, preds, average="weighted")
     return {"accuracy": acc, "f1": f1, "precision": precision, "recall": recall}
   
-  # Train model
+! pip install huggingface_hub
+
+from huggingface_hub import notebook_login
+
+notebook_login()
 
 training_args = TrainingArguments(
     output_dir="./model",
@@ -252,6 +254,19 @@ from datasets import load_metric
 metric = load_metric('accuracy')
 preds = np.argmax(predictions.predictions, axis=1)
 metric.compute(predictions=preds, references=predictions.label_ids)
+
+# Save model checkpoints, weights, and other parameters to hugging face hub
+
+trainer.push_to_hub()
+
+# Install and import packages
+! pip install datasets
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Load climate_fever data 
+from datasets import load_dataset
+dataset = load_dataset("climate_fever")
 
 claims=dataset["test"]["claim"]
 label=dataset["test"]["claim_label"]
@@ -326,6 +341,12 @@ data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 from transformers import AutoModelForSequenceClassification, TrainingArguments, Trainer
 model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased", num_labels=4)
 
+! pip install huggingface_hub
+
+from huggingface_hub import notebook_login
+
+notebook_login()
+
 # Train model
 
 training_args = TrainingArguments(
@@ -368,3 +389,18 @@ from datasets import load_metric
 metric = load_metric('accuracy')
 preds = np.argmax(predictions.predictions, axis=1)
 metric.compute(predictions=preds, references=predictions.label_ids)
+
+# Save model checkpoints, weights, and other parameters to hugging face hub
+
+trainer.push_to_hub()
+
+# Download tokenizer and pretrianed model from my hugging face hub
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+tokenizer = AutoTokenizer.from_pretrained("IntroToProgramming/model")
+model = AutoModelForSequenceClassification.from_pretrained("IntroToProgramming/model")
+
+# Create a classifier using downloaded model and tokenizer and test model with new claims
+from transformers import pipeline
+classifier = pipeline("text-classification", model = model, tokenizer = tokenizer)
+classifier("Global warming is driving polar bears toward extinction||Rising global temperatures, caused by the greenhouse effect, contribute to habitat destruction, endangering various species, such as the polar bear.")
+#classifier("Global warming is causing more extreme weather events like floods and droughts")
