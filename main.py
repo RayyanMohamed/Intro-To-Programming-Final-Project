@@ -252,3 +252,119 @@ from datasets import load_metric
 metric = load_metric('accuracy')
 preds = np.argmax(predictions.predictions, axis=1)
 metric.compute(predictions=preds, references=predictions.label_ids)
+
+claims=dataset["test"]["claim"]
+label=dataset["test"]["claim_label"]
+claim_id=dataset["test"]["claim_id"]
+
+# Create dataframe with claims and claim_labels
+d={"claims":claims,"labels":label}
+df=pd.DataFrame(data=d)
+
+claim_id_list, claim_list, claim_label_list, evidence_label_list, votes_list, evidence_list = [], [], [], [], [], []
+
+for i in range(len(df)):
+  claim_id=dataset["test"]["claim_id"][i]
+  claim=dataset["test"]["claim"][i]
+  claim_label=dataset["test"]["claim_label"][i]
+  for d in dataset["test"]["evidences"][i]:
+    claim_id_list.append(claim_id)
+    claim_list.append(claim)
+    claim_label_list.append(claim_label)
+    evidence_label_list.append(d["evidence_label"])
+    votes_list.append(d["votes"])
+    evidence_list.append(d["evidence"])
+    
+# Create a data frame with claim_id, claim, claim_label, evidence_label, and votes
+data={'claim_id' : claim_id_list, 'claim' : claim_list, 'claim_label' : claim_label_list, 'evidence' : evidence_list, 'evidence_label' : evidence_label_list, 'votes' : votes_list}
+df_evidence = pd.DataFrame(data=data)
+
+df_evidence.head()
+
+df_evidence["claim_evidence"] = df_evidence["claim"] + "||" + df_evidence["evidence"]
+del df_evidence["claim_id"]
+del df_evidence["claim"]
+del df_evidence["claim_label"]
+del df_evidence["evidence"]
+del df_evidence["votes"]
+df_evidence["labels"] = df_evidence["evidence_label"]
+del df_evidence["evidence_label"]
+df_evidence.head(20)
+
+# Split dataset intp train and test
+from datasets import Dataset, DatasetDict
+dataset = Dataset.from_pandas(df_evidence).train_test_split(test_size = 0.2)
+train_dataset = dataset["train"]
+test_dataset = dataset["test"]
+
+# Print length of train dataset
+len(train_dataset)
+
+# Print first element in train dataset 
+train_dataset[0]
+
+# Print length of test dataset
+len(test_dataset)
+
+# Print first element in test dataset
+test_dataset[0]
+
+# Define preprocess function to run tokenizer on claims
+def preprocess_function(examples):
+    #return tokenizer(examples["claim"], examples["evidence"], examples["claim_evidence"], truncation=True)
+    return tokenizer(examples["claim_evidence"], truncation=True)
+  
+# Tokenize train and test datasets
+tokenized_train_dataset = train_dataset.map(preprocess_function, batched=True)
+tokenized_test_dataset = test_dataset.map(preprocess_function, batched=True)
+
+# Use data collator for creating training batches
+from transformers import DataCollatorWithPadding
+data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+
+# Load DistilBERT model
+from transformers import AutoModelForSequenceClassification, TrainingArguments, Trainer
+model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased", num_labels=4)
+
+# Train model
+
+training_args = TrainingArguments(
+    output_dir="./model",
+    push_to_hub = True,
+    learning_rate=2e-5,
+    per_device_train_batch_size=16,
+    per_device_eval_batch_size=16,
+    num_train_epochs=10,
+    weight_decay=0.01,
+)
+
+trainer = Trainer(
+    model=model,
+    args=training_args,
+    train_dataset=tokenized_train_dataset, 
+    compute_metrics = compute_metrics,
+    eval_dataset=tokenized_test_dataset,
+    tokenizer=tokenizer,
+    data_collator=data_collator,
+)
+
+trainer.train()
+
+# Run prediction on model using tokenized test dataset
+predictions = trainer.predict(tokenized_test_dataset)
+
+# Print model prediction metrics
+trainer.evaluate()
+
+# Get accuracy of model
+# eval_loss: testing loss
+# eval_accuracy: accuracy of testing
+# eval_f1: combination of precision and recall
+# eval_precision: 
+# eval_recall: 
+
+import numpy as np
+from datasets import load_metric
+metric = load_metric('accuracy')
+preds = np.argmax(predictions.predictions, axis=1)
+metric.compute(predictions=preds, references=predictions.label_ids)
