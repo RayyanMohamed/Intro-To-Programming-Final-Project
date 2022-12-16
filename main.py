@@ -127,10 +127,21 @@ print(b, ": ", b1)
 print(c, ": ", c1)
 print(d, ": ", d1)
 
-print("Supports: ", 83754/654)
-print("Refutes: ", 27698/253)
-print("Not Enough Information: ", 59060/474)
-print("Disputed: ", 18909/154)
+# Incorporate a class to take inputs of category and category values and form an output
+class Analyze():
+  def __init__(self, category, value):
+    self.category = category
+    self.value = value
+  def result(self):
+    print(self.category, self.value)
+
+category0 = Analyze("Supports:", 83754/654)
+category0.result()
+category1 = Analyze("Refutes:", 27698/253)
+category1.result()
+category2 = Analyze("Not Enough Information:", 59060/474)
+category2.result()
+category3 = Analyze("Disputed:", 18909/154)
 
 # Plotting frequency of claim length with alpha controlling transparency of bars on histogram
 plt.hist(supports, alpha = 0.5)
