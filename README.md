@@ -10,7 +10,7 @@ Using machine learning to accurately analyze climate change statements
 - Install transformers
 - Install huggingface_hub
 
-### Executing program
+### Executing the program
 
 Copy GitHub program code OR access the Colab notebook here:
 https://colab.research.google.com/drive/1yrw8CbFNBQWkqip3FXEuqNznbHdWUxPs?usp=sharing
