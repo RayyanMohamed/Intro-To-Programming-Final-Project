@@ -29,12 +29,21 @@ This project is licensed under the MIT License - see the LICENSE.md file for det
 ## Acknowledgments
 
 Sources (also listed in "main.py"):
+
 Access final model: https://huggingface.co/IntroToProgramming/model
+
 climate_fever dataset: https://huggingface.co/datasets/climate_fever
+
 Research paper for background of dataset: https://www.arxiv-vanity.com/papers/2012.00614/
+
 Implementing DistilBERT: https://www.youtube.com/watch?v=s3LBdmZb00g
+
 Plotting graphs: https://www.geeksforgeeks.org/graph-plotting-in-python-set-1/
+
 Creating an ML project: https://www.youtube.com/watch?v=nKW8Ndu7Mjw
+
 Using Colab: https://www.youtube.com/watch?v=inN8seMm7UI
+
 Tokenization: https://www.youtube.com/watch?v=VFp38yj8h3A
+
 Hugging Face notebook login hub: https://huggingface.co/docs/hub/models-adding-libraries
