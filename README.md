@@ -12,6 +12,9 @@ Using machine learning to accurately analyze climate change statements
 
 ### Executing program
 
+Copy GitHub program code OR access the Colab notebook here:
+https://colab.research.google.com/drive/1yrw8CbFNBQWkqip3FXEuqNznbHdWUxPs?usp=sharing
+
 1. Run code in order provided
 2. Copy Hugging Face token from tokens page when prompt accessible
 3. To directly test the model - run the last code cell with your own input in the pipeline
